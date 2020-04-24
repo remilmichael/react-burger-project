@@ -1,9 +1,13 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import Button from '../../../components/UI/Button/Button';
 import classes from './ContactData.module.css';
 import axios from '../../../axios-orders';
 import Spinner from '../../../components/UI/Spinner/Spinner';
 import Input from '../../../components/UI/Input/Input';
+import * as actionTypes from '../../../store/actions/actionTypes';
+import * as actions from '../../../store/actions/order';
+import withErrorHandler from '../../../hoc/withErrorHandler/withErrorHandler';
 
 class ContactData extends Component {
     state = {
@@ -88,7 +92,7 @@ class ContactData extends Component {
             },
         },
         isFormValid: false,
-        loading: false
+        // loading: false
     }
 
     checkValidity(value, rules) {
@@ -111,9 +115,9 @@ class ContactData extends Component {
 
     orderHandler = ( event ) => {
         event.preventDefault();
-        this.setState({
-            loading: true
-        })
+        // this.setState({
+        //     loading: true
+        // })
 
         let formData = {};
         for (let formElementId in this.state.orderForm) {
@@ -122,7 +126,7 @@ class ContactData extends Component {
         //Just for Firebase only append the endpoint
         //with ".json" extension.
         const order = {
-            ingredients: this.props.ingredients,
+            ingredients: this.props.ings,
             //don't do this on real application 
             //recalculate the price on server, since
             //user may manipulate the price on
@@ -130,16 +134,18 @@ class ContactData extends Component {
             price: this.props.price,
             orderData: formData
         }
-        axios.post('/orders.json', order)
-            .then(response => {
-                this.setState({
-                    loading: false
-                });
-                this.props.history.push('/');
-            })
-            .catch(error => {
-                console.log(error);
-            });
+        this.props.onOrderBurger(order);
+        // axios.post('/orders.json', order)
+        //     .then(response => {
+        //         this.setState({
+        //             loading: false
+        //         });
+        //         this.props.onResetBurger();
+        //         this.props.history.push('/');
+        //     })
+        //     .catch(error => {
+        //         console.log(error);
+        //     });
     }
 
     inputChangedHandler = (event, inputIdentifier) => {
@@ -197,7 +203,7 @@ class ContactData extends Component {
                 </form>
             </React.Fragment>
         );
-        if (this.state.loading) {
+        if (this.props.loading) {
             form = <Spinner />;
         }
         return (
@@ -208,4 +214,19 @@ class ContactData extends Component {
     }
 }
 
-export default ContactData;
+const mapStateToProps = (state) => {
+    return {
+        ings: state.burgerBuilder.ingredients,
+        price: state.burgerBuilder.totalPrice,
+        loading: state.order.loading,
+    };
+};
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onResetBurger: () => dispatch({type: actionTypes.RESET_INGREDIENTS}),
+        onOrderBurger: (orderData) => dispatch(actions.purchaseBurger(orderData))
+    }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(withErrorHandler(ContactData, axios));
