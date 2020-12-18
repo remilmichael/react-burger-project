@@ -1,1 +1,1 @@
-React coursework - The Burger Project
+Udemy ReactJS coursework - The Burger Project
